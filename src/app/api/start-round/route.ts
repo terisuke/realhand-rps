@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
       commit_hash: result.commitHash,
     });
   } catch (err) {
-    console.error("[/api/start-round]", err);
+    console.error("[/api/start-round]", err instanceof Error ? err.message : "Unknown error");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

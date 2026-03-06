@@ -14,6 +14,11 @@ export interface StartRoundInput {
   currentRound: number;
 }
 
+/**
+ * SECURITY: aiMove and salt are for server-side storage only.
+ * NEVER include these in API responses to the client.
+ * Only commitHash should be sent to the client.
+ */
 export interface StartRoundResult {
   roundNumber: number;
   commitHash: string;

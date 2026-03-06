@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
       commit_proof: result.commitProof,
     });
   } catch (err) {
-    console.error("[/api/play]", err);
+    console.error("[/api/play]", err instanceof Error ? err.message : "Unknown error");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
