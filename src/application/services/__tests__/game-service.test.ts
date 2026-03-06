@@ -191,7 +191,7 @@ describe("integration: startNewRound -> revealAndJudge flow", () => {
   });
 
   it("handles multiple rounds in sequence", async () => {
-    const round1 = await service.startNewRound({
+    await service.startNewRound({
       sessionId: "multi-round",
       history: [],
       personality: "provocative",
