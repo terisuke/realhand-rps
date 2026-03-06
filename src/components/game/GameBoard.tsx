@@ -5,8 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useGameSession } from "@/hooks/useGameSession";
 import { useCountdown } from "@/hooks/useCountdown";
 import type { MoveType } from "@/domain/game/move";
-import CameraRPS from "@/components/CameraRPS";
-import ButtonRPS from "@/components/ButtonRPS";
+import CameraInput from "@/components/input/CameraInput";
+import ButtonInput from "@/components/input/ButtonInput";
 import AiThoughtBubble from "@/components/AiThoughtBubble";
 import GameResult from "@/components/GameResult";
 import ReportModal from "@/components/ReportModal";
@@ -131,9 +131,9 @@ export default function GameBoard() {
       {/* Input Area */}
       <div className="w-full max-w-lg">
         {state.mode === "camera" ? (
-          <CameraRPS onGestureConfirmed={handleMove} disabled={inputDisabled} />
+          <CameraInput onGestureConfirmed={handleMove} disabled={inputDisabled} />
         ) : (
-          <ButtonRPS onSelect={handleMove} disabled={inputDisabled} />
+          <ButtonInput onSelect={handleMove} disabled={inputDisabled} />
         )}
       </div>
 

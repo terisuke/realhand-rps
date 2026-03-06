@@ -1,20 +1,20 @@
 "use client";
 
 import { motion } from "framer-motion";
-import type { Move } from "@/types";
+import type { MoveType } from "@/domain/game/move";
 
 interface Props {
-  onSelect: (move: Move) => void;
+  onSelect: (move: MoveType) => void;
   disabled?: boolean;
 }
 
-const BUTTONS: { move: Move; emoji: string; label: string }[] = [
+const BUTTONS: { move: MoveType; emoji: string; label: string }[] = [
   { move: "rock", emoji: "✊", label: "グー" },
   { move: "scissors", emoji: "✌️", label: "チョキ" },
   { move: "paper", emoji: "✋", label: "パー" },
 ];
 
-export default function ButtonRPS({ onSelect, disabled }: Props) {
+export default function ButtonInput({ onSelect, disabled }: Props) {
   return (
     <div className="flex gap-6 justify-center">
       {BUTTONS.map(({ move, emoji, label }) => (

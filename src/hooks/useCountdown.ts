@@ -29,6 +29,7 @@ const PHASE_DELAY = 500;
 export function useCountdown(options: UseCountdownOptions): UseCountdownResult {
   const [phase, setPhase] = useState<CountdownPhase>("idle");
   const timeoutIds = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const phaseRef = useRef<CountdownPhase>("idle");
   const onCompleteRef = useRef(options.onComplete);
   useEffect(() => {
     onCompleteRef.current = options.onComplete;
@@ -43,32 +44,34 @@ export function useCountdown(options: UseCountdownOptions): UseCountdownResult {
 
   const reset = useCallback(() => {
     clearAllTimeouts();
+    phaseRef.current = "idle";
     setPhase("idle");
   }, [clearAllTimeouts]);
 
   const start = useCallback(() => {
-    setPhase((current) => {
-      if (current !== "idle") return current;
+    if (phaseRef.current !== "idle") return;
+    clearAllTimeouts();
 
-      clearAllTimeouts();
+    phaseRef.current = "janken";
+    setPhase("janken");
 
-      const t1 = setTimeout(() => {
-        setPhase("ken");
-      }, PHASE_DELAY);
+    const t1 = setTimeout(() => {
+      phaseRef.current = "ken";
+      setPhase("ken");
+    }, PHASE_DELAY);
 
-      const t2 = setTimeout(() => {
-        setPhase("pon");
-      }, PHASE_DELAY * 2);
+    const t2 = setTimeout(() => {
+      phaseRef.current = "pon";
+      setPhase("pon");
+    }, PHASE_DELAY * 2);
 
-      const t3 = setTimeout(() => {
-        setPhase("reveal");
-        onCompleteRef.current();
-      }, PHASE_DELAY * 3);
+    const t3 = setTimeout(() => {
+      phaseRef.current = "reveal";
+      setPhase("reveal");
+      onCompleteRef.current();
+    }, PHASE_DELAY * 3);
 
-      timeoutIds.current = [t1, t2, t3];
-
-      return "janken";
-    });
+    timeoutIds.current = [t1, t2, t3];
   }, [clearAllTimeouts]);
 
   useEffect(() => {
