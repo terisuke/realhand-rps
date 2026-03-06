@@ -128,7 +128,7 @@ describe("submitMove", () => {
   });
 
   it("returns empty milestones array on normal round with no special events", async () => {
-    const input = await makeValidInput({
+    await makeValidInput({
       playerMove: "rock",
       aiMove: "scissors",
       currentRound: 2,

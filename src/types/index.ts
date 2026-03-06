@@ -1,7 +1,17 @@
-export type Move = "rock" | "paper" | "scissors";
-export type Result = "win" | "lose" | "draw";
+// Re-export domain types
+export type { MoveType } from "@/domain/game/move";
+export type { ResultType } from "@/domain/game/round-result";
+
+// Backward-compatible aliases
+import type { MoveType } from "@/domain/game/move";
+import type { ResultType } from "@/domain/game/round-result";
+
+export type Move = MoveType;
+export type Result = ResultType;
+
 export type GameMode = "camera" | "button";
 
+// API-boundary interfaces (snake_case conventions)
 export interface MatchRecord {
   id?: string;
   session_id: string;
