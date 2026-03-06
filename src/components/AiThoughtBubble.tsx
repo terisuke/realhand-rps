@@ -16,6 +16,7 @@ export default function AiThoughtBubble({ thought }: Props) {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -8, scale: 0.95 }}
           transition={{ duration: 0.25 }}
+          data-testid="ai-thought"
           className="relative max-w-xs rounded-2xl bg-indigo-950/80 border border-indigo-500/40 px-5 py-3 text-sm text-indigo-200 shadow-lg"
         >
           {/* 吹き出しの三角 */}

@@ -57,6 +57,7 @@ export default function ReportModal({ open, data, onClose, onReset }: Props) {
           exit={{ scale: 0.9, opacity: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 25 }}
           onClick={(e) => e.stopPropagation()}
+          data-testid="report-modal"
           className="w-full max-w-lg bg-gray-900 border border-indigo-500/30 rounded-3xl p-6 overflow-y-auto max-h-[90vh]"
         >
           <h2 className="text-2xl font-bold text-center text-white mb-1">

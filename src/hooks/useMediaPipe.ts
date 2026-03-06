@@ -110,6 +110,7 @@ export function useMediaPipe(
 
   useEffect(() => {
     let cancelled = false;
+    const video = videoRef.current;
 
     (async () => {
       try {
@@ -147,7 +148,6 @@ export function useMediaPipe(
         streamRef.current = null;
       }
       // Clear video element
-      const video = videoRef.current;
       if (video) {
         video.onloadeddata = null;
         video.srcObject = null;
@@ -158,7 +158,7 @@ export function useMediaPipe(
         landmarkerRef.current = null;
       }
     };
-  }, [startCamera]);
+  }, [startCamera, videoRef]);
 
   return { gesture, stability, landmarks, loading, error };
 }

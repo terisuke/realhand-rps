@@ -208,7 +208,7 @@ export function useGameSession(): {
         setPending(false);
       }
     },
-    [pending, isComplete, sessionId, currentRound, rounds, personality]
+    [pending, isComplete, sessionId, currentRound, rounds, personality, phase]
   );
 
   const toggleMode = useCallback(() => {

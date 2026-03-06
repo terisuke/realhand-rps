@@ -30,7 +30,9 @@ export function useCountdown(options: UseCountdownOptions): UseCountdownResult {
   const [phase, setPhase] = useState<CountdownPhase>("idle");
   const timeoutIds = useRef<ReturnType<typeof setTimeout>[]>([]);
   const onCompleteRef = useRef(options.onComplete);
-  onCompleteRef.current = options.onComplete;
+  useEffect(() => {
+    onCompleteRef.current = options.onComplete;
+  }, [options.onComplete]);
 
   const clearAllTimeouts = useCallback(() => {
     for (const id of timeoutIds.current) {

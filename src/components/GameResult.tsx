@@ -34,6 +34,7 @@ export default function GameResult({ playerMove, aiMove, result }: Props) {
     <motion.div
       initial={{ opacity: 0, scale: 0.85 }}
       animate={{ opacity: 1, scale: 1 }}
+      data-testid="game-result"
       className="flex flex-col items-center gap-4"
     >
       <div className="flex items-center gap-8 text-center">

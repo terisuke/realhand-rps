@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Milestone } from "@/domain/game/milestone";
 
@@ -53,8 +53,8 @@ function getTheme(type: string) {
   return TOAST_THEME[type] ?? DEFAULT_THEME;
 }
 
-export default function MilestoneToast({ milestones, onDismiss }: MilestoneToastProps) {
-  const [visibleIds, setVisibleIds] = useState<Set<string>>(new Set());
+function MilestoneToastInner({ milestones, onDismiss }: MilestoneToastProps) {
+  const [dismissedKeys, setDismissedKeys] = useState<Set<string>>(new Set());
 
   const buildKey = useCallback(
     (m: Milestone) => `${m.type}-${m.atRound}`,
@@ -64,30 +64,25 @@ export default function MilestoneToast({ milestones, onDismiss }: MilestoneToast
   useEffect(() => {
     if (milestones.length === 0) return;
 
-    const newKeys = milestones.map(buildKey);
-    setVisibleIds((prev) => {
-      const next = new Set(prev);
-      for (const key of newKeys) next.add(key);
-      return next;
-    });
-
-    const timers = newKeys.map((key) =>
-      setTimeout(() => {
-        setVisibleIds((prev) => {
-          const next = new Set(prev);
-          next.delete(key);
-          if (next.size === 0) onDismiss?.();
+    const timers = milestones.map((m) => {
+      const key = buildKey(m);
+      return setTimeout(() => {
+        setDismissedKeys((prev) => {
+          const next = new Set([...prev, key]);
+          if (milestones.every((ms) => next.has(buildKey(ms)))) {
+            onDismiss?.();
+          }
           return next;
         });
-      }, 3000),
-    );
+      }, 3000);
+    });
 
     return () => timers.forEach(clearTimeout);
   }, [milestones, buildKey, onDismiss]);
 
   if (milestones.length === 0) return null;
 
-  const visibleMilestones = milestones.filter((m) => visibleIds.has(buildKey(m)));
+  const visibleMilestones = milestones.filter((m) => !dismissedKeys.has(buildKey(m)));
 
   return (
     <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
@@ -110,10 +105,11 @@ export default function MilestoneToast({ milestones, onDismiss }: MilestoneToast
               <button
                 type="button"
                 onClick={() => {
-                  setVisibleIds((prev) => {
-                    const next = new Set(prev);
-                    next.delete(key);
-                    if (next.size === 0) onDismiss?.();
+                  setDismissedKeys((prev) => {
+                    const next = new Set([...prev, key]);
+                    if (milestones.every((ms) => next.has(buildKey(ms)))) {
+                      onDismiss?.();
+                    }
                     return next;
                   });
                 }}
@@ -128,4 +124,13 @@ export default function MilestoneToast({ milestones, onDismiss }: MilestoneToast
       </AnimatePresence>
     </div>
   );
+}
+
+export default function MilestoneToast({ milestones, onDismiss }: MilestoneToastProps) {
+  const stableKey = useMemo(
+    () => milestones.map((m) => `${m.type}-${m.atRound}`).join(","),
+    [milestones],
+  );
+
+  return <MilestoneToastInner key={stableKey} milestones={milestones} onDismiss={onDismiss} />;
 }

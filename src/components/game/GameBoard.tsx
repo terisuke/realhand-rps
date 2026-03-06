@@ -22,6 +22,7 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
   return (
     <div className="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
       <motion.div
+        data-testid="progress-bar"
         className="h-full bg-indigo-500"
         initial={false}
         animate={{ width: `${pct}%` }}
@@ -138,7 +139,7 @@ export default function GameBoard() {
 
       {/* Error */}
       {state.error && (
-        <div className="px-4 py-2 rounded-xl bg-red-900/40 border border-red-500/40 text-red-300 text-sm">
+        <div data-testid="error-bar" className="px-4 py-2 rounded-xl bg-red-900/40 border border-red-500/40 text-red-300 text-sm">
           {state.error}
         </div>
       )}
