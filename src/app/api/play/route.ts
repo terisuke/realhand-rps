@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { SubmitMoveSchema } from "@/application/schemas";
 import { submitMove } from "@/application/use-cases/submit-move";
 import { getPreCommit, deletePreCommit } from "@/application/services/pre-commit-store";
+import { saveMatch } from "@/infrastructure/supabase/match-repository";
 
 export const runtime = "nodejs";
 
@@ -52,7 +53,18 @@ export async function POST(req: NextRequest) {
     // Delete pre-commit only after successful use case execution
     deletePreCommit(session_id, round_number);
 
-    // TODO: Save to Supabase via infrastructure/supabase/match-repository.ts (Sprint 4)
+    // Save to Supabase (fire-and-forget, doesn't block response)
+    saveMatch({
+      sessionId: session_id,
+      roundNumber: round_number,
+      playerMove: player_move,
+      aiMove: result.aiMove,
+      result: result.result,
+      thought: result.thought,
+      phase: "opening",
+    }).catch((err) => {
+      console.error("[/api/play] Supabase save failed:", err);
+    });
 
     return NextResponse.json({
       ai_move: result.aiMove,
