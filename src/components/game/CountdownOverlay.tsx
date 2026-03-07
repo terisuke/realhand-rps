@@ -34,12 +34,7 @@ export function CountdownOverlay({
               initial={{ scale: 0.3, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 1.5, opacity: 0 }}
-              transition={{
-                type: "spring",
-                stiffness: 400,
-                damping: 15,
-                duration: 0.3,
-              }}
+              transition={{ type: "tween", duration: 0.18, ease: "easeOut" }}
             >
               {label}
             </motion.span>

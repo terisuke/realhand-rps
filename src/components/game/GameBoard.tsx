@@ -145,9 +145,7 @@ export default function GameBoard() {
       )}
 
       {/* Countdown Overlay */}
-      <AnimatePresence>
-        {countdown.isActive && <CountdownOverlay phase={countdown.phase} label={countdown.label} isActive={countdown.isActive} />}
-      </AnimatePresence>
+      <CountdownOverlay phase={countdown.phase} label={countdown.label} isActive={countdown.isActive} />
 
       {/* Milestone Toast */}
       <MilestoneToast milestones={state.milestones} />
