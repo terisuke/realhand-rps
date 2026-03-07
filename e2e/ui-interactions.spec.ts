@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import {
   switchToButtonMode,
-  waitForAppReady,
+  navigateAndWaitForReady,
   playOneRound,
   getScores,
 } from "./helpers/game-helpers";
@@ -16,8 +16,7 @@ test.describe("UI Interactions", () => {
       localStorage.clear();
     });
 
-    await page.goto("/");
-    await waitForAppReady(page);
+    await navigateAndWaitForReady(page);
   });
 
   // -------------------------------------------------------------------------

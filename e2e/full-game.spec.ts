@@ -1,6 +1,7 @@
 import { test, expect, Page } from "@playwright/test";
 import {
   switchToButtonMode,
+  navigateAndWaitForReady,
   waitForAppReady,
   playFullGame,
 } from "./helpers/game-helpers";
@@ -19,8 +20,7 @@ test.describe.serial("30-round full game", () => {
       localStorage.removeItem("rps_session_id");
     });
 
-    await sharedPage.goto("/");
-    await waitForAppReady(sharedPage);
+    await navigateAndWaitForReady(sharedPage);
     await switchToButtonMode(sharedPage);
 
     // Verify we start on round 1
