@@ -22,6 +22,8 @@ const ALL_SITUATIONS: Situation[] = [
   "endgame",
 ];
 
+const ALL_RESULTS: ("win" | "lose" | "draw")[] = ["win", "lose", "draw"];
+
 const ALL_TYPES: AiPersonalityType[] = ["provocative", "analytical", "uncanny"];
 
 describe("ALL_PERSONALITIES", () => {
@@ -51,13 +53,15 @@ describe("getPersonality", () => {
     expect(p.description).toBeTruthy();
   });
 
-  it("各パーソナリティはすべてのSituationに対してテンプレートを持つ", () => {
+  it("各パーソナリティはすべてのSituationとResultに対してテンプレートを持つ", () => {
     for (const type of ALL_TYPES) {
       const p = getPersonality(type);
       for (const situation of ALL_SITUATIONS) {
-        expect(p.thoughtTemplates[situation]).toBeDefined();
-        expect(Array.isArray(p.thoughtTemplates[situation])).toBe(true);
-        expect(p.thoughtTemplates[situation].length).toBeGreaterThan(0);
+        for (const result of ALL_RESULTS) {
+          expect(p.thoughtTemplates[situation][result]).toBeDefined();
+          expect(Array.isArray(p.thoughtTemplates[situation][result])).toBe(true);
+          expect(p.thoughtTemplates[situation][result].length).toBeGreaterThan(0);
+        }
       }
     }
   });
@@ -66,7 +70,7 @@ describe("getPersonality", () => {
     for (const type of ALL_TYPES) {
       const p = getPersonality(type);
       const totalTemplates = ALL_SITUATIONS.reduce(
-        (sum, s) => sum + p.thoughtTemplates[s].length,
+        (sum, s) => sum + p.thoughtTemplates[s].win.length + p.thoughtTemplates[s].lose.length + p.thoughtTemplates[s].draw.length,
         0
       );
       expect(totalTemplates).toBeGreaterThanOrEqual(10);
@@ -92,21 +96,36 @@ describe("randomPersonalityType", () => {
 });
 
 describe("getTemplate", () => {
-  it.each(ALL_SITUATIONS)("situation=%s に対して文字列を返す", (situation) => {
+  it.each(ALL_SITUATIONS)("situation=%s に対して各resultで文字列を返す", (situation) => {
     for (const type of ALL_TYPES) {
       const p = getPersonality(type);
-      const template = getTemplate(p, situation);
-      expect(typeof template).toBe("string");
-      expect(template.length).toBeGreaterThan(0);
+      for (const result of ALL_RESULTS) {
+        const template = getTemplate(p, situation, result);
+        expect(typeof template).toBe("string");
+        expect(template.length).toBeGreaterThan(0);
+      }
     }
   });
 
   it("テンプレートは日本語を含む", () => {
     for (const type of ALL_TYPES) {
       const p = getPersonality(type);
-      const template = getTemplate(p, "opening");
-      // 日本語文字（ひらがな・カタカナ・漢字）が含まれることを確認
-      expect(/[\u3040-\u9FFF]/.test(template)).toBe(true);
+      for (const result of ALL_RESULTS) {
+        const template = getTemplate(p, "opening", result);
+        expect(/[\u3040-\u9FFF]/.test(template)).toBe(true);
+      }
+    }
+  });
+
+  it("resultごとに異なるテンプレートプールから返す", () => {
+    const p = getPersonality("provocative");
+    const winTemplates = p.thoughtTemplates.opening.win;
+    const loseTemplates = p.thoughtTemplates.opening.lose;
+    const drawTemplates = p.thoughtTemplates.opening.draw;
+    // win/lose/draw テンプレートは互いに重複しない
+    for (const t of winTemplates) {
+      expect(loseTemplates).not.toContain(t);
+      expect(drawTemplates).not.toContain(t);
     }
   });
 });

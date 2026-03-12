@@ -110,38 +110,47 @@ describe("determineSituation", () => {
 describe("generateThought", () => {
   it("文字列を返す", () => {
     const personality = getPersonality("analytical");
-    const result = generateThought(personality, [], "test reason");
+    const result = generateThought(personality, [], "test reason", "win");
     expect(typeof result).toBe("string");
     expect(result.length).toBeGreaterThan(0);
   });
 
   it("provocative personality は provocative のテンプレートから返す", () => {
     const personality = getPersonality("provocative");
-    const templates = Object.values(personality.thoughtTemplates).flat();
-    const result = generateThought(personality, [], "reason");
-    expect(templates).toContain(result);
+    const allTemplates = Object.values(personality.thoughtTemplates).flatMap(
+      (rt) => [...rt.win, ...rt.lose, ...rt.draw]
+    );
+    const result = generateThought(personality, [], "reason", "draw");
+    expect(allTemplates).toContain(result);
   });
 
   it("analytical personality は analytical のテンプレートから返す", () => {
     const personality = getPersonality("analytical");
-    const templates = Object.values(personality.thoughtTemplates).flat();
-    const result = generateThought(personality, [], "reason");
-    expect(templates).toContain(result);
+    const allTemplates = Object.values(personality.thoughtTemplates).flatMap(
+      (rt) => [...rt.win, ...rt.lose, ...rt.draw]
+    );
+    const result = generateThought(personality, [], "reason", "lose");
+    expect(allTemplates).toContain(result);
   });
 
   it("uncanny personality は uncanny のテンプレートから返す", () => {
     const personality = getPersonality("uncanny");
-    const templates = Object.values(personality.thoughtTemplates).flat();
-    const result = generateThought(personality, [], "reason");
-    expect(templates).toContain(result);
+    const allTemplates = Object.values(personality.thoughtTemplates).flatMap(
+      (rt) => [...rt.win, ...rt.lose, ...rt.draw]
+    );
+    const result = generateThought(personality, [], "reason", "win");
+    expect(allTemplates).toContain(result);
   });
 
   it("異なるパーソナリティは異なるテンプレートプールを使う", () => {
     const provocative = getPersonality("provocative");
     const analytical = getPersonality("analytical");
-    const provocativeTemplates = Object.values(provocative.thoughtTemplates).flat();
-    const analyticalTemplates = Object.values(analytical.thoughtTemplates).flat();
-    // テンプレートが完全に重複していないことを確認
+    const provocativeTemplates = Object.values(provocative.thoughtTemplates).flatMap(
+      (rt) => [...rt.win, ...rt.lose, ...rt.draw]
+    );
+    const analyticalTemplates = Object.values(analytical.thoughtTemplates).flatMap(
+      (rt) => [...rt.win, ...rt.lose, ...rt.draw]
+    );
     const hasOverlap = provocativeTemplates.some((t) => analyticalTemplates.includes(t));
     expect(hasOverlap).toBe(false);
   });
@@ -154,13 +163,25 @@ describe("generateThought", () => {
       makeInput("paper", "lose", "scissors"),
       makeInput("scissors", "lose", "rock"),
     ];
-    const result = generateThought(personality, history, "reason");
-    expect(personality.thoughtTemplates.winning_streak).toContain(result);
+    const result = generateThought(personality, history, "reason", "lose");
+    expect(personality.thoughtTemplates.winning_streak.lose).toContain(result);
   });
 
   it("opening 状況では opening テンプレートを使う", () => {
     const personality = getPersonality("uncanny");
-    const result = generateThought(personality, [], "reason");
-    expect(personality.thoughtTemplates.opening).toContain(result);
+    const result = generateThought(personality, [], "reason", "win");
+    expect(personality.thoughtTemplates.opening.win).toContain(result);
+  });
+
+  it("returns result-appropriate template for each result type", () => {
+    const personality = getPersonality("provocative");
+    const winResult = generateThought(personality, [], "", "win");
+    expect(personality.thoughtTemplates.opening.win).toContain(winResult);
+
+    const loseResult = generateThought(personality, [], "", "lose");
+    expect(personality.thoughtTemplates.opening.lose).toContain(loseResult);
+
+    const drawResult = generateThought(personality, [], "", "draw");
+    expect(personality.thoughtTemplates.opening.draw).toContain(drawResult);
   });
 });

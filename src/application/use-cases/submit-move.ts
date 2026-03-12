@@ -42,7 +42,7 @@ export async function submitMove(input: SubmitMoveInput): Promise<SubmitMoveResu
   const result = judge(playerMoveObj, aiMoveObj);
 
   const personalityObj = getPersonality(personality);
-  const thought = generateThought(personalityObj, history, "");
+  const thought = generateThought(personalityObj, history, "", result);
 
   const roundsWithCurrent = [
     ...history.map((h, i) => ({ result: h.result, roundNumber: i + 1 })),

@@ -38,10 +38,11 @@ export function determineSituation(history: PredictorInput[]): Situation {
 export function generateThought(
   personality: AiPersonality,
   history: PredictorInput[],
-  reason: string
+  reason: string,
+  currentResult: "win" | "lose" | "draw"
 ): string {
   const situation = determineSituation(history);
-  const template = getTemplate(personality, situation);
+  const template = getTemplate(personality, situation, currentResult);
   if (reason && template.includes("{{reason}}")) {
     return template.replace("{{reason}}", reason);
   }
