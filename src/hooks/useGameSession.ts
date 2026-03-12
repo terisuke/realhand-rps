@@ -226,8 +226,8 @@ export function useGameSession(): {
     setError(null);
     if (typeof window !== "undefined") {
       localStorage.removeItem(SESSION_STORAGE_KEY);
+      window.location.reload();
     }
-    window.location.reload();
   }, []);
 
   const state: GameState = {

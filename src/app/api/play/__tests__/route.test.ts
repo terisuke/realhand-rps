@@ -11,9 +11,6 @@ vi.mock("@/application/use-cases/submit-move", () => ({
   submitMove: vi.fn(),
 }));
 
-vi.mock("@/lib/supabase", () => ({
-  saveMatch: vi.fn().mockResolvedValue(undefined),
-}));
 
 import { getPreCommit, deletePreCommit } from "@/application/services/pre-commit-store";
 import { submitMove } from "@/application/use-cases/submit-move";
