@@ -2,6 +2,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import { POST } from "@/app/api/play/route";
 
+const TEST_UUID = "550e8400-e29b-41d4-a716-446655440000";
+const TEST_UUID_2 = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
+
 vi.mock("@/application/services/pre-commit-store", () => ({
   getPreCommit: vi.fn(),
   deletePreCommit: vi.fn(),
@@ -42,10 +45,10 @@ describe("POST /api/play", () => {
   });
 
   it("returns 404 when no pre-commit exists for the round", async () => {
-    mockedGetPreCommit.mockReturnValue(undefined);
+    mockedGetPreCommit.mockResolvedValue(undefined);
 
     const req = makeRequest({
-      session_id: "test-session",
+      session_id: TEST_UUID,
       round_number: 1,
       player_move: "rock",
     });
@@ -57,7 +60,7 @@ describe("POST /api/play", () => {
   });
 
   it("returns result when pre-commit exists", async () => {
-    mockedGetPreCommit.mockReturnValue({
+    mockedGetPreCommit.mockResolvedValue({
       aiMove: "scissors",
       salt: "salt-123",
       commitHash: "hash-abc",
@@ -75,7 +78,7 @@ describe("POST /api/play", () => {
     });
 
     const req = makeRequest({
-      session_id: "test-session",
+      session_id: TEST_UUID,
       round_number: 1,
       player_move: "rock",
     });
@@ -93,7 +96,7 @@ describe("POST /api/play", () => {
   });
 
   it("deletes pre-commit after retrieval", async () => {
-    mockedGetPreCommit.mockReturnValue({
+    mockedGetPreCommit.mockResolvedValue({
       aiMove: "rock",
       salt: "s",
       commitHash: "h",
@@ -111,25 +114,25 @@ describe("POST /api/play", () => {
     });
 
     const req = makeRequest({
-      session_id: "s1",
+      session_id: TEST_UUID_2,
       round_number: 1,
       player_move: "rock",
     });
     await POST(req);
 
-    expect(mockedDeletePreCommit).toHaveBeenCalledWith("s1", 1);
+    expect(mockedDeletePreCommit).toHaveBeenCalledWith(TEST_UUID_2, 1);
   });
 
   it("calls getPreCommit with correct session_id and round_number", async () => {
-    mockedGetPreCommit.mockReturnValue(undefined);
+    mockedGetPreCommit.mockResolvedValue(undefined);
 
     const req = makeRequest({
-      session_id: "my-session",
+      session_id: TEST_UUID,
       round_number: 5,
       player_move: "paper",
     });
     await POST(req);
 
-    expect(mockedGetPreCommit).toHaveBeenCalledWith("my-session", 5);
+    expect(mockedGetPreCommit).toHaveBeenCalledWith(TEST_UUID, 5);
   });
 });

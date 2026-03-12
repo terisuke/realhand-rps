@@ -26,7 +26,7 @@ export class GameService {
       currentRound: params.currentRound,
     });
 
-    savePreCommit(params.sessionId, result.roundNumber, {
+    await savePreCommit(params.sessionId, result.roundNumber, {
       aiMove: result.aiMove,
       salt: result.salt,
       commitHash: result.commitHash,
@@ -48,7 +48,7 @@ export class GameService {
     personality: AiPersonalityType;
     history: PredictorInput[];
   }): Promise<SubmitMoveResult> {
-    const preCommit = getPreCommit(params.sessionId, params.roundNumber);
+    const preCommit = await getPreCommit(params.sessionId, params.roundNumber);
 
     if (!preCommit) {
       throw new Error(
@@ -67,7 +67,7 @@ export class GameService {
     });
 
     // Delete only after successful execution
-    deletePreCommit(params.sessionId, params.roundNumber);
+    await deletePreCommit(params.sessionId, params.roundNumber);
 
     return result;
   }

@@ -11,14 +11,14 @@ export const PredictorInputSchema = z.object({
 });
 
 export const StartRoundSchema = z.object({
-  session_id: z.string().min(1),
+  session_id: z.string().uuid(),
   rounds: z.array(PredictorInputSchema).default([]),
   personality: PersonalitySchema.default("analytical"),
   current_round: z.number().int().min(1).max(30).default(1),
 });
 
 export const SubmitMoveSchema = z.object({
-  session_id: z.string().min(1),
+  session_id: z.string().uuid(),
   round_number: z.number().int().min(1).max(30),
   player_move: MoveSchema,
 });

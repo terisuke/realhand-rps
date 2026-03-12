@@ -2,6 +2,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import { POST } from "../route";
 
+const TEST_UUID = "550e8400-e29b-41d4-a716-446655440000";
+const TEST_UUID_2 = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
+
 vi.mock("@/application/use-cases/start-round", () => ({
   startRound: vi.fn().mockResolvedValue({
     roundNumber: 1,
@@ -12,9 +15,9 @@ vi.mock("@/application/use-cases/start-round", () => ({
 }));
 
 vi.mock("@/application/services/pre-commit-store", () => ({
-  savePreCommit: vi.fn(),
-  getPreCommit: vi.fn(),
-  deletePreCommit: vi.fn(),
+  savePreCommit: vi.fn().mockResolvedValue(undefined),
+  getPreCommit: vi.fn().mockResolvedValue(undefined),
+  deletePreCommit: vi.fn().mockResolvedValue(undefined),
   clearAllPreCommits: vi.fn(),
 }));
 
@@ -34,7 +37,7 @@ describe("POST /api/start-round", () => {
 
   it("returns 200 with round_number and commit_hash on valid request", async () => {
     const req = createRequest({
-      session_id: "test-session-123",
+      session_id: TEST_UUID,
       current_round: 1,
       personality: "analytical",
       rounds: [],
@@ -68,6 +71,14 @@ describe("POST /api/start-round", () => {
     expect(res.status).toBe(400);
   });
 
+  it("returns 400 when session_id is not a UUID", async () => {
+    const req = createRequest({ session_id: "not-a-uuid" });
+
+    const res = await POST(req);
+
+    expect(res.status).toBe(400);
+  });
+
   it("returns 400 on invalid JSON", async () => {
     const req = new NextRequest("http://localhost:3000/api/start-round", {
       method: "POST",
@@ -84,7 +95,7 @@ describe("POST /api/start-round", () => {
 
   it("returns 400 when personality is invalid", async () => {
     const req = createRequest({
-      session_id: "test",
+      session_id: TEST_UUID,
       personality: "normal",
     });
 
@@ -94,7 +105,7 @@ describe("POST /api/start-round", () => {
 
   it("does not leak aiMove or salt in response", async () => {
     const req = createRequest({
-      session_id: "secure-session",
+      session_id: TEST_UUID_2,
       current_round: 1,
     });
 

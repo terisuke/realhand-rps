@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 
     const { session_id, player_move, round_number } = parsed.data;
 
-    const preCommit = getPreCommit(session_id, round_number);
+    const preCommit = await getPreCommit(session_id, round_number);
 
     if (!preCommit) {
       return NextResponse.json(
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Delete pre-commit only after successful use case execution
-    deletePreCommit(session_id, round_number);
+    await deletePreCommit(session_id, round_number);
 
     // Save to Supabase (fire-and-forget, doesn't block response)
     saveMatch({

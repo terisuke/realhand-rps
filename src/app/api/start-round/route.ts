@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       currentRound: current_round,
     });
 
-    savePreCommit(session_id, result.roundNumber, {
+    await savePreCommit(session_id, result.roundNumber, {
       aiMove: result.aiMove,
       salt: result.salt,
       commitHash: result.commitHash,
