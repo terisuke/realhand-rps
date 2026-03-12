@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
-import ButtonRPS from "@/components/ButtonRPS";
+import ButtonRPS from "@/components/input/ButtonInput";
 
 // ---------------------------------------------------------------------------
 // Mock framer-motion - must faithfully pass through onClick/disabled/aria-label

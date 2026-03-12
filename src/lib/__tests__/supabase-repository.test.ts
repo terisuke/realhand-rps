@@ -1,67 +1,65 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
 
 // ---------------------------------------------------------------------------
-// Mock the @supabase/supabase-js module BEFORE importing the module under test
+// Mock the supabase client module
 // ---------------------------------------------------------------------------
 
 const mockInsert = vi.fn();
 const mockOrder = vi.fn();
 const mockEq = vi.fn();
-const mockSelectChain = {
-  eq: mockEq,
-};
-const mockSelect = vi.fn().mockReturnValue(mockSelectChain);
+const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
 const mockFrom = vi.fn().mockReturnValue({
   insert: mockInsert,
   select: mockSelect,
 });
 
-let mockUrl: string | undefined = "https://test.supabase.co";
-let mockKey: string | undefined = "test-anon-key";
+let mockSupabaseConfigured = true;
 
-vi.mock("@supabase/supabase-js", () => ({
-  createClient: vi.fn(() => ({
-    from: mockFrom,
-  })),
+vi.mock("@/infrastructure/supabase/client", () => ({
+  get supabase() {
+    if (!mockSupabaseConfigured) return null;
+    return { from: mockFrom };
+  },
+  get isSupabaseConfigured() {
+    return mockSupabaseConfigured;
+  },
 }));
 
-// Override env vars before import
-const originalEnv = { ...process.env };
-
-describe("supabase repository - saveMatch", () => {
+describe("match-repository - saveMatch", () => {
   beforeEach(() => {
-    vi.resetModules();
     vi.clearAllMocks();
-    mockUrl = "https://test.supabase.co";
-    mockKey = "test-anon-key";
-    process.env.NEXT_PUBLIC_SUPABASE_URL = mockUrl;
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = mockKey;
-
-    // Reset chain mocks
-    mockFrom.mockReturnValue({
-      insert: mockInsert,
-      select: mockSelect,
-    });
+    mockSupabaseConfigured = true;
+    mockFrom.mockReturnValue({ insert: mockInsert, select: mockSelect });
     mockEq.mockReturnValue({ order: mockOrder });
   });
 
   it("calls supabase.from('matches').insert with correct shape", async () => {
     mockInsert.mockResolvedValue({ error: null });
 
-    const { saveMatch } = await import("@/lib/supabase");
+    const { saveMatch } = await import(
+      "@/infrastructure/supabase/match-repository"
+    );
 
-    const match = {
-      session_id: "test-session",
-      player_move: "rock" as const,
-      ai_move: "paper" as const,
-      result: "lose" as const,
-      round: 1,
-    };
-
-    await saveMatch(match);
+    await saveMatch({
+      sessionId: "test-session",
+      roundNumber: 1,
+      playerMove: "rock",
+      aiMove: "paper",
+      result: "lose",
+      thought: "テスト思考",
+      phase: "opening",
+    });
 
     expect(mockFrom).toHaveBeenCalledWith("matches");
-    expect(mockInsert).toHaveBeenCalledWith(match);
+    expect(mockInsert).toHaveBeenCalledWith({
+      session_id: "test-session",
+      round_number: 1,
+      player_move: "rock",
+      ai_move: "paper",
+      result: "lose",
+      thought: "テスト思考",
+      phase: "opening",
+    });
   });
 
   it("does not throw when insert returns error (logs only)", async () => {
@@ -69,34 +67,29 @@ describe("supabase repository - saveMatch", () => {
       error: { message: "insert failed" },
     });
 
-    const { saveMatch } = await import("@/lib/supabase");
+    const { saveMatch } = await import(
+      "@/infrastructure/supabase/match-repository"
+    );
 
-    // Should not throw
     await expect(
       saveMatch({
-        session_id: "test-session",
-        player_move: "scissors" as const,
-        ai_move: "rock" as const,
-        result: "lose" as const,
-        round: 2,
+        sessionId: "test-session",
+        roundNumber: 2,
+        playerMove: "scissors",
+        aiMove: "rock",
+        result: "lose",
+        thought: "",
+        phase: "midgame",
       })
     ).resolves.toBeUndefined();
   });
 });
 
-describe("supabase repository - getSessionHistory", () => {
+describe("match-repository - getMatchesBySession", () => {
   beforeEach(() => {
-    vi.resetModules();
     vi.clearAllMocks();
-    mockUrl = "https://test.supabase.co";
-    mockKey = "test-anon-key";
-    process.env.NEXT_PUBLIC_SUPABASE_URL = mockUrl;
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = mockKey;
-
-    mockFrom.mockReturnValue({
-      insert: mockInsert,
-      select: mockSelect,
-    });
+    mockSupabaseConfigured = true;
+    mockFrom.mockReturnValue({ insert: mockInsert, select: mockSelect });
     mockEq.mockReturnValue({ order: mockOrder });
   });
 
@@ -105,30 +98,40 @@ describe("supabase repository - getSessionHistory", () => {
       {
         id: "1",
         session_id: "sess-1",
+        round_number: 1,
         player_move: "rock",
         ai_move: "paper",
         result: "lose",
-        round: 1,
+        thought: "",
+        phase: "opening",
+        created_at: "2026-03-12T00:00:00Z",
       },
       {
         id: "2",
         session_id: "sess-1",
+        round_number: 2,
         player_move: "scissors",
         ai_move: "rock",
         result: "lose",
-        round: 2,
+        thought: "",
+        phase: "opening",
+        created_at: "2026-03-12T00:01:00Z",
       },
     ];
 
     mockOrder.mockResolvedValue({ data: mockData, error: null });
 
-    const { getSessionHistory } = await import("@/lib/supabase");
-    const result = await getSessionHistory("sess-1");
+    const { getMatchesBySession } = await import(
+      "@/infrastructure/supabase/match-repository"
+    );
+    const result = await getMatchesBySession("sess-1");
 
     expect(mockFrom).toHaveBeenCalledWith("matches");
     expect(mockSelect).toHaveBeenCalledWith("*");
     expect(mockEq).toHaveBeenCalledWith("session_id", "sess-1");
-    expect(mockOrder).toHaveBeenCalledWith("round", { ascending: true });
+    expect(mockOrder).toHaveBeenCalledWith("round_number", {
+      ascending: true,
+    });
     expect(result).toEqual(mockData);
   });
 
@@ -138,8 +141,10 @@ describe("supabase repository - getSessionHistory", () => {
       error: { message: "query failed" },
     });
 
-    const { getSessionHistory } = await import("@/lib/supabase");
-    const result = await getSessionHistory("sess-bad");
+    const { getMatchesBySession } = await import(
+      "@/infrastructure/supabase/match-repository"
+    );
+    const result = await getMatchesBySession("sess-bad");
 
     expect(result).toEqual([]);
   });
@@ -147,50 +152,52 @@ describe("supabase repository - getSessionHistory", () => {
   it("returns empty array when data is null but no error", async () => {
     mockOrder.mockResolvedValue({ data: null, error: null });
 
-    const { getSessionHistory } = await import("@/lib/supabase");
-    const result = await getSessionHistory("sess-empty");
+    const { getMatchesBySession } = await import(
+      "@/infrastructure/supabase/match-repository"
+    );
+    const result = await getMatchesBySession("sess-empty");
 
     expect(result).toEqual([]);
   });
 });
 
-describe("supabase repository - unconfigured (no env vars)", () => {
+describe("match-repository - unconfigured (no supabase)", () => {
   beforeEach(() => {
-    vi.resetModules();
     vi.clearAllMocks();
-    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
-    delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    mockSupabaseConfigured = false;
   });
 
   afterAll(() => {
-    process.env = { ...originalEnv };
+    mockSupabaseConfigured = true;
   });
 
   it("saveMatch returns undefined when supabase is not configured", async () => {
-    const { saveMatch } = await import("@/lib/supabase");
+    const { saveMatch } = await import(
+      "@/infrastructure/supabase/match-repository"
+    );
 
     await expect(
       saveMatch({
-        session_id: "test",
-        player_move: "rock" as const,
-        ai_move: "paper" as const,
-        result: "lose" as const,
-        round: 1,
+        sessionId: "test",
+        roundNumber: 1,
+        playerMove: "rock",
+        aiMove: "paper",
+        result: "lose",
+        thought: "",
+        phase: "opening",
       })
     ).resolves.toBeUndefined();
 
-    // from() should NOT have been called
     expect(mockFrom).not.toHaveBeenCalled();
   });
 
-  it("getSessionHistory returns empty array when supabase is not configured", async () => {
-    const { getSessionHistory } = await import("@/lib/supabase");
+  it("getMatchesBySession returns empty array when supabase is not configured", async () => {
+    const { getMatchesBySession } = await import(
+      "@/infrastructure/supabase/match-repository"
+    );
 
-    const result = await getSessionHistory("sess-1");
+    const result = await getMatchesBySession("sess-1");
     expect(result).toEqual([]);
     expect(mockFrom).not.toHaveBeenCalled();
   });
 });
-
-// Needed for afterAll in unconfigured tests
-import { afterAll } from "vitest";

@@ -355,7 +355,7 @@ describe("Commit integrity", () => {
 
   it("tampered hash fails verification", async () => {
     const salt = generateSalt();
-    const hash = await createCommitHash("rock", salt);
+    await createCommitHash("rock", salt);
     const tampered = "a".repeat(64);
 
     expect(await verifyCommitHash("rock", salt, tampered)).toBe(false);
