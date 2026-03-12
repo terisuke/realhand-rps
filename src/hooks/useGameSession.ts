@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import type { MoveType } from "@/domain/game/move";
 import type { AiPersonalityType } from "@/domain/ai/ai-personality";
@@ -16,7 +16,7 @@ const TOTAL_ROUNDS = 30;
 const SESSION_STORAGE_KEY = "rps_session_id";
 
 function getOrCreateSessionId(): string {
-  if (typeof window === "undefined") return uuidv4();
+  if (typeof window === "undefined") return "";
   const stored = localStorage.getItem(SESSION_STORAGE_KEY);
   if (stored) return stored;
   const id = uuidv4();
@@ -77,8 +77,13 @@ export function useGameSession(): {
   isComplete: boolean;
   report: SessionReport | null;
 } {
-  const [sessionId] = useState(() => getOrCreateSessionId());
+  const [sessionId, setSessionId] = useState("");
   const [personality] = useState<AiPersonalityType>(() => randomPersonalityType());
+
+  // Hydration-safe: set sessionId only on client to avoid SSR mismatch (#418)
+  useEffect(() => {
+    setSessionId(getOrCreateSessionId());
+  }, []);
   const [rounds, setRounds] = useState<RoundData[]>([]);
   const [currentRound, setCurrentRound] = useState(1);
   const [phase, setPhase] = useState<GamePhase>("opening");
@@ -99,7 +104,7 @@ export function useGameSession(): {
   const startingRef = useRef(false);
 
   const startRound = useCallback(async () => {
-    if (isComplete || startingRef.current) return;
+    if (isComplete || startingRef.current || !sessionId) return;
     startingRef.current = true;
     setError(null);
 
@@ -133,7 +138,7 @@ export function useGameSession(): {
 
   const submitMove = useCallback(
     async (playerMove: MoveType) => {
-      if (pending || isComplete) return;
+      if (pending || isComplete || !sessionId) return;
       setPending(true);
       setError(null);
       setLastResult(null);

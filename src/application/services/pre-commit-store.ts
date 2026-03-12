@@ -73,7 +73,11 @@ export async function getPreCommit(
       .eq("revealed", false)
       .single();
 
-    if (error || !row) return undefined;
+    if (error) {
+      console.error("[getPreCommit] Supabase query failed:", error.message, error.code);
+      return undefined;
+    }
+    if (!row) return undefined;
 
     return {
       aiMove: row.ai_move as MoveType,
