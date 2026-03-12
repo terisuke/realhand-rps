@@ -49,11 +49,10 @@ export default function GameBoard() {
   const startedRef = useRef(false);
 
   useEffect(() => {
-    if (startedRef.current) return;
+    if (!state.sessionId || startedRef.current) return;
     startedRef.current = true;
     actions.startRound();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [state.sessionId, actions]);
 
   useEffect(() => {
     if (isComplete) {
