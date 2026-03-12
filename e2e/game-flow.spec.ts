@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import {
   switchToButtonMode,
-  waitForAppReady,
+  navigateAndWaitForReady,
   playOneRound,
   getScores,
 } from "./helpers/game-helpers";
@@ -9,8 +9,7 @@ import type { HandLabel } from "./helpers/game-helpers";
 
 test.describe("Game Flow - Button Mode", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/");
-    await waitForAppReady(page);
+    await navigateAndWaitForReady(page);
   });
 
   test("initial load shows round header, mode toggle, and zero scores", async ({

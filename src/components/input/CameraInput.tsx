@@ -66,7 +66,7 @@ export default function CameraInput({ onGestureConfirmed, disabled }: Props) {
         return;
       }
 
-      if (gestureRef.current && stabilityRef.current > 0.85) {
+      if (gestureRef.current && stabilityRef.current > 0.65) {
         if (stableStartRef.current === null) {
           stableStartRef.current = performance.now();
         }

@@ -24,7 +24,7 @@ const PHASE_LABELS: Record<CountdownPhase, string> = {
   reveal: "",
 };
 
-const PHASE_DELAY = 500;
+export const PHASE_DELAY = 700;
 
 export function useCountdown(options: UseCountdownOptions): UseCountdownResult {
   const [phase, setPhase] = useState<CountdownPhase>("idle");

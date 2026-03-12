@@ -23,8 +23,8 @@ export function classifyGesture(landmarks: Landmark[]): MoveType | null {
   // Rock: all curled
   if (extendedCount === 0) return "rock";
 
-  // Scissors: index + middle only
-  if (indexUp && middleUp && !ringUp && !pinkyUp) return "scissors";
+  // Scissors: index + middle extended (allow partial ring/pinky extension)
+  if (extendedCount === 2 && indexUp && middleUp) return "scissors";
 
   return null;
 }
@@ -43,5 +43,5 @@ export function stabilityScore(
   }
 
   const avgDiff = totalDiff / current.length;
-  return Math.max(0, 1 - avgDiff / 0.01);
+  return Math.max(0, 1 - avgDiff / 0.05);
 }

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useCountdown } from "../useCountdown";
+import { useCountdown, PHASE_DELAY } from "../useCountdown";
 
 describe("useCountdown", () => {
   beforeEach(() => {
@@ -33,7 +33,7 @@ describe("useCountdown", () => {
     expect(result.current.isActive).toBe(true);
 
     act(() => {
-      vi.advanceTimersByTime(500);
+      vi.advanceTimersByTime(PHASE_DELAY);
     });
 
     expect(result.current.phase).toBe("ken");
@@ -41,7 +41,7 @@ describe("useCountdown", () => {
     expect(result.current.isActive).toBe(true);
 
     act(() => {
-      vi.advanceTimersByTime(500);
+      vi.advanceTimersByTime(PHASE_DELAY);
     });
 
     expect(result.current.phase).toBe("pon");
@@ -49,7 +49,7 @@ describe("useCountdown", () => {
     expect(result.current.isActive).toBe(true);
 
     act(() => {
-      vi.advanceTimersByTime(500);
+      vi.advanceTimersByTime(PHASE_DELAY);
     });
 
     expect(result.current.phase).toBe("reveal");
@@ -68,7 +68,7 @@ describe("useCountdown", () => {
     expect(onComplete).not.toHaveBeenCalled();
 
     act(() => {
-      vi.advanceTimersByTime(1500);
+      vi.advanceTimersByTime(PHASE_DELAY * 3);
     });
 
     expect(onComplete).toHaveBeenCalledTimes(1);
@@ -89,7 +89,7 @@ describe("useCountdown", () => {
     });
 
     act(() => {
-      vi.advanceTimersByTime(500);
+      vi.advanceTimersByTime(PHASE_DELAY);
     });
 
     expect(result.current.phase).toBe("ken");
@@ -121,7 +121,7 @@ describe("useCountdown", () => {
     expect(result.current.phase).toBe("janken");
 
     act(() => {
-      vi.advanceTimersByTime(500);
+      vi.advanceTimersByTime(PHASE_DELAY);
     });
 
     act(() => {
@@ -131,7 +131,7 @@ describe("useCountdown", () => {
     expect(result.current.phase).toBe("ken");
 
     act(() => {
-      vi.advanceTimersByTime(1000);
+      vi.advanceTimersByTime(PHASE_DELAY * 2);
     });
 
     expect(result.current.phase).toBe("reveal");

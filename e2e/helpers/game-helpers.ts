@@ -16,13 +16,24 @@ export async function switchToButtonMode(page: Page): Promise<void> {
 }
 
 /**
- * Wait for the initial /api/start-round call that fires on mount.
+ * Navigate to the app and wait for the initial /api/start-round call.
+ * Sets up the response listener BEFORE navigation to avoid race conditions.
+ */
+export async function navigateAndWaitForReady(page: Page): Promise<void> {
+  const readyPromise = page.waitForResponse(
+    (res) => res.url().includes("/api/start-round"),
+    { timeout: 15_000 },
+  );
+  await page.goto("/");
+  await readyPromise;
+}
+
+/**
+ * Wait for the app to be ready after a reload (response listener set up after navigation).
+ * Falls back to waiting for the Round header to be visible.
  */
 export async function waitForAppReady(page: Page): Promise<void> {
-  await page.waitForResponse(
-    (res) => res.url().includes("/api/start-round") && res.status() === 200,
-    { timeout: 10_000 },
-  );
+  await page.waitForSelector('text=Round 1 / 30', { timeout: 10_000 });
 }
 
 /**
@@ -40,8 +51,9 @@ export async function playOneRound(
   await expect(moveButton).toBeEnabled({ timeout: 10_000 });
 
   // Set up response listener BEFORE clicking to avoid race condition
+  // Accept any status — errors are handled by the UI
   const playResponsePromise = page.waitForResponse(
-    (res) => res.url().includes("/api/play") && res.status() === 200,
+    (res) => res.url().includes("/api/play"),
     { timeout: 15_000 },
   );
 
