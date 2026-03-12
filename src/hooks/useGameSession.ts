@@ -13,16 +13,6 @@ import type { PredictorInput } from "@/domain/ai/predictor";
 import { generateReport } from "@/application/use-cases/generate-report";
 
 const TOTAL_ROUNDS = 30;
-const SESSION_STORAGE_KEY = "rps_session_id";
-
-function getOrCreateSessionId(): string {
-  if (typeof window === "undefined") return "";
-  const stored = localStorage.getItem(SESSION_STORAGE_KEY);
-  if (stored) return stored;
-  const id = uuidv4();
-  localStorage.setItem(SESSION_STORAGE_KEY, id);
-  return id;
-}
 
 function roundsToHistory(rounds: RoundData[]): PredictorInput[] {
   return rounds.map((r) => ({
@@ -78,11 +68,14 @@ export function useGameSession(): {
   report: SessionReport | null;
 } {
   const [sessionId, setSessionId] = useState("");
-  const [personality] = useState<AiPersonalityType>(() => randomPersonalityType());
+  const [personality, setPersonality] = useState<AiPersonalityType>("analytical");
 
-  // Hydration-safe: set sessionId only on client to avoid SSR mismatch (#418)
+  // Hydration-safe: initialize sessionId and personality only on client
+  // sessionId: fresh UUID per page load (no localStorage) to avoid stale round_commits conflicts
+  // personality: random on client only to avoid SSR/client mismatch (#418)
   useEffect(() => {
-    setSessionId(getOrCreateSessionId());
+    setSessionId(uuidv4());
+    setPersonality(randomPersonalityType());
   }, []);
   const [rounds, setRounds] = useState<RoundData[]>([]);
   const [currentRound, setCurrentRound] = useState(1);
@@ -232,7 +225,6 @@ export function useGameSession(): {
     setPending(false);
     setError(null);
     if (typeof window !== "undefined") {
-      localStorage.removeItem(SESSION_STORAGE_KEY);
       window.location.reload();
     }
   }, []);
