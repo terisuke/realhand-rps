@@ -2,11 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { StartRoundSchema } from "@/application/schemas";
 import { startRound } from "@/application/use-cases/start-round";
 import { savePreCommit } from "@/application/services/pre-commit-store";
+import { checkRateLimit } from "@/app/api/_middleware/rate-limit";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip") ?? "unknown";
+    const rateCheck = checkRateLimit(ip);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
     let body: unknown;
     try {
       body = await req.json();

@@ -7,10 +7,10 @@ import {
 import type { MoveType } from "@/domain/game/move";
 
 describe("generateSalt", () => {
-  it("returns a non-empty string", () => {
+  it("returns a 64-character hex string", () => {
     const salt = generateSalt();
     expect(typeof salt).toBe("string");
-    expect(salt.length).toBeGreaterThan(0);
+    expect(salt).toMatch(/^[0-9a-f]{64}$/);
   });
 
   it("produces unique values across 10 calls", () => {

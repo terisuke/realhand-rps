@@ -18,11 +18,13 @@ function constantTimeEqual(a: string, b: string): boolean {
 }
 
 export function generateSalt(): string {
-  return crypto.randomUUID();
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 export async function createCommitHash(move: MoveType, salt: string): Promise<string> {
-  return sha256(`${move.length}:${move}|${salt.length}:${salt}`);
+  return sha256(`${move}|${salt}`);
 }
 
 export async function verifyCommitHash(

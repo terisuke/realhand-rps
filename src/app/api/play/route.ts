@@ -3,11 +3,21 @@ import { SubmitMoveSchema } from "@/application/schemas";
 import { submitMove } from "@/application/use-cases/submit-move";
 import { getPreCommit, deletePreCommit } from "@/application/services/pre-commit-store";
 import { saveMatch } from "@/infrastructure/supabase/match-repository";
+import { checkRateLimit } from "@/app/api/_middleware/rate-limit";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip") ?? "unknown";
+    const rateCheck = checkRateLimit(ip);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
     let body: unknown;
     try {
       body = await req.json();
