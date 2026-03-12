@@ -1,43 +1,80 @@
 import { NextRequest, NextResponse } from "next/server";
-import { JankenAI, judgeResult } from "@/lib/janken-ai";
-import { saveMatch } from "@/lib/supabase";
-import type { PlayRequest, PlayResponse } from "@/types";
-
-// セッションごとに AI インスタンスをメモリで保持（Edge ではなく Node.js runtime 使用）
-const aiSessions = new Map<string, JankenAI>();
+import { SubmitMoveSchema } from "@/application/schemas";
+import { submitMove } from "@/application/use-cases/submit-move";
+import { getPreCommit, deletePreCommit } from "@/application/services/pre-commit-store";
+import { saveMatch } from "@/infrastructure/supabase/match-repository";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
-    const body: PlayRequest = await req.json();
-    const { player_move, session_id, history } = body;
-
-    if (!player_move || !session_id) {
-      return NextResponse.json({ error: "Bad request" }, { status: 400 });
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Bad request", details: "Invalid JSON" },
+        { status: 400 }
+      );
     }
 
-    // セッションの AI インスタンスを取得または生成
-    if (!aiSessions.has(session_id)) {
-      aiSessions.set(session_id, new JankenAI());
+    const parsed = SubmitMoveSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Bad request", details: parsed.error.flatten() },
+        { status: 400 }
+      );
     }
-    const ai = aiSessions.get(session_id)!;
 
-    // ★ AI はプレイヤーの手を受け取ってから決定 → イカサマ不可能
-    const { move: ai_move, thought } = ai.decide(history);
+    const { session_id, player_move, round_number } = parsed.data;
 
-    // 勝敗判定
-    const result = judgeResult(player_move, ai_move);
+    const preCommit = getPreCommit(session_id, round_number);
 
-    const round = history.length + 1;
+    if (!preCommit) {
+      return NextResponse.json(
+        { error: "No pre-commit found for this round. Call /api/start-round first." },
+        { status: 404 }
+      );
+    }
 
-    // Supabase に保存（非同期、失敗してもゲームは続行）
-    saveMatch({ session_id, player_move, ai_move, result, round }).catch(() => {});
+    const { aiMove, salt, commitHash, personality, history } = preCommit;
 
-    const response: PlayResponse = { ai_move, result, thought };
-    return NextResponse.json(response);
+    const result = await submitMove({
+      playerMove: player_move,
+      aiMove,
+      salt,
+      commitHash,
+      personality,
+      history,
+      currentRound: round_number,
+    });
+
+    // Delete pre-commit only after successful use case execution
+    deletePreCommit(session_id, round_number);
+
+    // Save to Supabase (fire-and-forget, doesn't block response)
+    saveMatch({
+      sessionId: session_id,
+      roundNumber: round_number,
+      playerMove: player_move,
+      aiMove: result.aiMove,
+      result: result.result,
+      thought: result.thought,
+      phase: "opening",
+    }).catch((err) => {
+      console.error("[/api/play] Supabase save failed:", err);
+    });
+
+    return NextResponse.json({
+      ai_move: result.aiMove,
+      result: result.result,
+      thought: result.thought,
+      milestones: result.milestones,
+      commit_proof: result.commitProof,
+    });
   } catch (err) {
-    console.error("[/api/play]", err);
+    console.error("[/api/play]", err instanceof Error ? err.message : "Unknown error");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
