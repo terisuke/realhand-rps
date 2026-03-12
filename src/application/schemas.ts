@@ -21,6 +21,8 @@ export const SubmitMoveSchema = z.object({
   session_id: z.string().uuid(),
   round_number: z.number().int().min(1).max(30),
   player_move: MoveSchema,
+  personality: PersonalitySchema.default("analytical"),
+  rounds: z.array(PredictorInputSchema).default([]),
 });
 
 export type StartRoundInput = z.infer<typeof StartRoundSchema>;

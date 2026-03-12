@@ -146,6 +146,8 @@ export function useGameSession(): {
             session_id: sessionId,
             round_number: currentRound,
             player_move: playerMove,
+            personality,
+            rounds: roundsToHistory(rounds),
           }),
         });
 

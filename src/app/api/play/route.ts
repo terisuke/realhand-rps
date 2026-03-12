@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { session_id, player_move, round_number } = parsed.data;
+    const { session_id, player_move, round_number, personality, rounds } = parsed.data;
 
     const preCommit = await getPreCommit(session_id, round_number);
 
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { aiMove, salt, commitHash, personality, history } = preCommit;
+    const { aiMove, salt, commitHash } = preCommit;
 
     const result = await submitMove({
       playerMove: player_move,
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
       salt,
       commitHash,
       personality,
-      history,
+      history: rounds,
       currentRound: round_number,
     });
 

@@ -22,12 +22,16 @@ describe("pre-commit-store (in-memory fallback)", () => {
     clearAllPreCommits();
   });
 
-  it("saves and retrieves a pre-commit", async () => {
+  it("saves and retrieves a pre-commit (returns only aiMove, salt, commitHash)", async () => {
     const data = makeData();
     await savePreCommit("session-1", 1, data);
 
     const result = await getPreCommit("session-1", 1);
-    expect(result).toEqual(data);
+    expect(result).toEqual({
+      aiMove: "rock",
+      salt: "test-salt-abc",
+      commitHash: "hash-abc-123",
+    });
   });
 
   it("returns undefined for non-existent key", async () => {
@@ -69,5 +73,14 @@ describe("pre-commit-store (in-memory fallback)", () => {
 
     const result = await getPreCommit("s1", 1);
     expect(result?.aiMove).toBe("scissors");
+  });
+
+  it("does not return personality or history from getPreCommit", async () => {
+    await savePreCommit("session-1", 1, makeData({ personality: "uncanny", history: [{ playerMove: "rock", aiMove: "paper", result: "lose" }] }));
+
+    const result = await getPreCommit("session-1", 1);
+    expect(result).toBeDefined();
+    expect(result).not.toHaveProperty("personality");
+    expect(result).not.toHaveProperty("history");
   });
 });

@@ -146,4 +146,43 @@ describe("SubmitMoveSchema", () => {
     const result = SubmitMoveSchema.parse({ ...valid, extra: "field" });
     expect(result).not.toHaveProperty("extra");
   });
+
+  it("personality のデフォルトは analytical", () => {
+    const result = SubmitMoveSchema.parse(valid);
+    expect(result.personality).toBe("analytical");
+  });
+
+  it("personality を明示的に指定できる", () => {
+    const result = SubmitMoveSchema.parse({ ...valid, personality: "provocative" });
+    expect(result.personality).toBe("provocative");
+  });
+
+  it("無効な personality はエラー", () => {
+    expect(() =>
+      SubmitMoveSchema.parse({ ...valid, personality: "unknown" })
+    ).toThrow();
+  });
+
+  it("rounds のデフォルトは空配列", () => {
+    const result = SubmitMoveSchema.parse(valid);
+    expect(result.rounds).toEqual([]);
+  });
+
+  it("rounds に履歴を渡せる", () => {
+    const result = SubmitMoveSchema.parse({
+      ...valid,
+      rounds: [{ playerMove: "rock", aiMove: "paper", result: "lose" }],
+    });
+    expect(result.rounds).toHaveLength(1);
+    expect(result.rounds[0].playerMove).toBe("rock");
+  });
+
+  it("rounds の要素が不正な場合はエラー", () => {
+    expect(() =>
+      SubmitMoveSchema.parse({
+        ...valid,
+        rounds: [{ playerMove: "fire", aiMove: "paper", result: "lose" }],
+      })
+    ).toThrow();
+  });
 });

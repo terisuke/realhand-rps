@@ -69,9 +69,6 @@ describe("POST /api/play", () => {
       aiMove: "scissors",
       salt: "salt-123",
       commitHash: "hash-abc",
-      personality: "provocative",
-      history: [],
-      currentRound: 1,
     });
 
     mockedSubmitMove.mockResolvedValue({
@@ -86,6 +83,8 @@ describe("POST /api/play", () => {
       session_id: TEST_UUID,
       round_number: 1,
       player_move: "rock",
+      personality: "provocative",
+      rounds: [],
     });
     const res = await POST(req);
 
@@ -101,14 +100,45 @@ describe("POST /api/play", () => {
     });
   });
 
+  it("uses personality and rounds from request body", async () => {
+    mockedGetPreCommit.mockResolvedValue({
+      aiMove: "paper",
+      salt: "s",
+      commitHash: "h",
+    });
+
+    mockedSubmitMove.mockResolvedValue({
+      aiMove: "paper",
+      result: "lose",
+      thought: "got you",
+      milestones: [],
+      commitProof: { hash: "h", salt: "s", verified: true },
+    });
+
+    const history = [{ playerMove: "rock" as const, aiMove: "scissors" as const, result: "win" as const }];
+    const req = makeRequest({
+      session_id: TEST_UUID,
+      round_number: 2,
+      player_move: "rock",
+      personality: "uncanny",
+      rounds: history,
+    });
+    await POST(req);
+
+    expect(mockedSubmitMove).toHaveBeenCalledWith(
+      expect.objectContaining({
+        personality: "uncanny",
+        history: history,
+        currentRound: 2,
+      })
+    );
+  });
+
   it("returns persisted false when Supabase save fails", async () => {
     mockedGetPreCommit.mockResolvedValue({
       aiMove: "rock",
       salt: "s",
       commitHash: "h",
-      personality: "analytical",
-      history: [],
-      currentRound: 1,
     });
 
     mockedSubmitMove.mockResolvedValue({
@@ -138,9 +168,6 @@ describe("POST /api/play", () => {
       aiMove: "rock",
       salt: "s",
       commitHash: "h",
-      personality: "analytical",
-      history: [],
-      currentRound: 1,
     });
 
     mockedSubmitMove.mockResolvedValue({
