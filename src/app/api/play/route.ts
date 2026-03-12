@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 
     if (!preCommit) {
       return NextResponse.json(
-        { error: "No pre-commit found for this round. Call /api/start-round first." },
+        { error: "No pre-commit found. Either call /api/start-round first, or this round was already played." },
         { status: 404 }
       );
     }
@@ -53,18 +53,22 @@ export async function POST(req: NextRequest) {
     // Delete pre-commit only after successful use case execution
     await deletePreCommit(session_id, round_number);
 
-    // Save to Supabase (fire-and-forget, doesn't block response)
-    saveMatch({
-      sessionId: session_id,
-      roundNumber: round_number,
-      playerMove: player_move,
-      aiMove: result.aiMove,
-      result: result.result,
-      thought: result.thought,
-      phase: "opening",
-    }).catch((err) => {
-      console.error("[/api/play] Supabase save failed:", err);
-    });
+    // Save to Supabase (awaited but non-blocking on failure)
+    let persisted = false;
+    try {
+      await saveMatch({
+        sessionId: session_id,
+        roundNumber: round_number,
+        playerMove: player_move,
+        aiMove: result.aiMove,
+        result: result.result,
+        thought: result.thought,
+        phase: "opening",
+      });
+      persisted = true;
+    } catch {
+      console.error("[/api/play] Match persistence failed");
+    }
 
     return NextResponse.json({
       ai_move: result.aiMove,
@@ -72,9 +76,10 @@ export async function POST(req: NextRequest) {
       thought: result.thought,
       milestones: result.milestones,
       commit_proof: result.commitProof,
+      persisted,
     });
-  } catch (err) {
-    console.error("[/api/play]", err instanceof Error ? err.message : "Unknown error");
+  } catch {
+    console.error("[/api/play] Internal error occurred");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

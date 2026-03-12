@@ -14,13 +14,18 @@ vi.mock("@/application/use-cases/submit-move", () => ({
   submitMove: vi.fn(),
 }));
 
+vi.mock("@/infrastructure/supabase/match-repository", () => ({
+  saveMatch: vi.fn(),
+}));
 
 import { getPreCommit, deletePreCommit } from "@/application/services/pre-commit-store";
 import { submitMove } from "@/application/use-cases/submit-move";
+import { saveMatch } from "@/infrastructure/supabase/match-repository";
 
 const mockedGetPreCommit = vi.mocked(getPreCommit);
 const mockedDeletePreCommit = vi.mocked(deletePreCommit);
 const mockedSubmitMove = vi.mocked(submitMove);
+const mockedSaveMatch = vi.mocked(saveMatch);
 
 function makeRequest(body: unknown): NextRequest {
   return new NextRequest("http://localhost/api/play", {
@@ -92,7 +97,40 @@ describe("POST /api/play", () => {
       thought: "test thought",
       milestones: [],
       commit_proof: { hash: "hash-abc", salt: "salt-123", verified: true },
+      persisted: true,
     });
+  });
+
+  it("returns persisted false when Supabase save fails", async () => {
+    mockedGetPreCommit.mockResolvedValue({
+      aiMove: "rock",
+      salt: "s",
+      commitHash: "h",
+      personality: "analytical",
+      history: [],
+      currentRound: 1,
+    });
+
+    mockedSubmitMove.mockResolvedValue({
+      aiMove: "rock",
+      result: "draw",
+      thought: "",
+      milestones: [],
+      commitProof: { hash: "h", salt: "s", verified: true },
+    });
+
+    mockedSaveMatch.mockRejectedValue(new Error("DB connection lost"));
+
+    const req = makeRequest({
+      session_id: TEST_UUID,
+      round_number: 1,
+      player_move: "rock",
+    });
+    const res = await POST(req);
+
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.persisted).toBe(false);
   });
 
   it("deletes pre-commit after retrieval", async () => {

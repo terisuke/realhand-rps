@@ -48,8 +48,8 @@ export async function POST(req: NextRequest) {
       round_number: result.roundNumber,
       commit_hash: result.commitHash,
     });
-  } catch (err) {
-    console.error("[/api/start-round]", err instanceof Error ? err.message : "Unknown error");
+  } catch {
+    console.error("[/api/start-round] Internal error occurred");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
