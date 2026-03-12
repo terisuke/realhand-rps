@@ -198,7 +198,7 @@ export function useGameSession(): {
               setCommitHash(nextData.commit_hash);
             }
           } catch {
-            // Non-critical: next startRound can be retried
+            setError("次のラウンドの開始に失敗しました。もう一度お試しください。");
           }
         }
       } catch (e) {
