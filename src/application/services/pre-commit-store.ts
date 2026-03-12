@@ -33,19 +33,17 @@ export async function savePreCommit(
   const key = toKey(sessionId, roundNumber);
 
   if (isSupabaseConfigured && supabase) {
-    const { error } = await supabase.from("round_commits").upsert(
-      {
-        session_id: sessionId,
-        round_number: roundNumber,
-        ai_move: data.aiMove,
-        salt: data.salt,
-        commit_hash: data.commitHash,
-        revealed: false,
-      },
-      { onConflict: "session_id,round_number" }
-    );
+    const { error } = await supabase.from("round_commits").insert({
+      session_id: sessionId,
+      round_number: roundNumber,
+      ai_move: data.aiMove,
+      salt: data.salt,
+      commit_hash: data.commitHash,
+      revealed: false,
+    });
 
-    if (error) {
+    // 23505 = unique_violation (round already started, safe to ignore)
+    if (error && error.code !== "23505") {
       throw new Error(`Failed to save pre-commit: ${error.message}`);
     }
 
